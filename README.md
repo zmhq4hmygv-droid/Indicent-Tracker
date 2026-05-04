@@ -1,1 +1,1 @@
-# Indicent-Tracker
+# Incident-Tracker
