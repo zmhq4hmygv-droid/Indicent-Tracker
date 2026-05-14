@@ -1,36 +1,24 @@
 name: Run Police Email Bot
-
 on:
   schedule:
     - cron: "*/15 * * * *"
-
   workflow_dispatch:
-
 jobs:
   run-script:
-
     runs-on: ubuntu-latest
-
     steps:
-
       - name: Checkout repo
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
-
         with:
           python-version: "3.10"
-
       - name: Install packages
-        run: pip install -r requirements.txt
-
+        run: pip install firebase-admin python-dateutil
       - name: Run bot
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-
         run: python send_email.py
-
       - name: Commit fingerprints
         run: |
           git config user.name github-actions
