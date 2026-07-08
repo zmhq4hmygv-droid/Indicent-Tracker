@@ -1,30 +1,96 @@
 # Incident Tracker 🚨
 
-An automated system that monitors police events and sends email notifications to registered users.
+An automated system that monitors Swedish police events and sends email
+notifications to registered users, based on their municipality (kommun).
+
+**Live site:** _add URL once launched_
+
+## About the project
+
+Incident Tracker lets anyone in Sweden — from central Stockholm to small
+towns in Skåne or Umeå — sign up with their kommun and get notified by
+email when a relevant police-reported incident happens nearby. No app,
+no login, no real-time push notifications — just a clean summary when
+something is actually worth knowing about.
 
 ## How it works
 
-1. Users sign up via the web app and select their city
-2. GitHub Actions runs a Python script every 5 minutes
-3. The script fetches new events from the [Swedish Police API](https://polisen.se/api/events)
-4. Relevant crimes are sent via email to users in the affected city
+1. A user signs up on the website with their name, email, and kommun.
+2. A GitHub Action runs `send_email.py` every 5 minutes.
+3. The script fetches new events from the [Swedish Police API](https://polisen.se/api/events).
+4. Relevant, recent crimes (last 24h) are matched against each user's
+   kommun and sent via email.
+
+## Features
+
+- National coverage — all 290 Swedish kommuner, not just Stockholm
+- Duplicate-safe signups (unique email constraint)
+- Filters out irrelevant/administrative police reports (training,
+  press briefings, controls) and only sends genuine crime-related events
+- Tracks already-sent events so no one gets the same alert twice
+- Simple, dependency-light backend — no third-party auth or database
+  service required
 
 ## Tech Stack
 
-- Python 3.9
-- Firebase (Authentication + Firestore)
-- GitHub Actions
+- Python 3.9 (Flask, SQLite)
+- Vanilla HTML / CSS / JavaScript (no frontend framework)
+- GitHub Actions (scheduling)
 - Gmail SMTP
 
-## Files
+## Project structure
 
-- `send_email.py` — Main script that fetches and sends notifications
-- `index.html` — Web app for registration and settings
-- `.github/workflows/run.yml` — GitHub Actions schedule
-- `skickade.json` — Tracks already sent events
+```
+Indicent-Tracker/
+├── backend/
+│   ├── app.py              # Flask API — registration + SQLite
+│   ├── requirements.txt
+│   └── incident_tracker.db # created automatically on first run
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   ├── script.js
+│   └── kommuner.js          # all 290 Swedish kommuner
+├── send_email.py            # runs via GitHub Actions every 5 minutes
+├── skickade.json            # tracks already-sent events
+├── .github/workflows/run.yml
+└── README.md
+```
 
 ## Setup
 
-1. Add `EMAIL_PASSWORD` and `FIREBASE_KEY` as GitHub Secrets
-2. Enable Email/Password in Firebase Authentication
-3. Deploy `index.html` to Firebase Hosting
+1. Host `backend/app.py` somewhere persistent (Render, Railway, Fly.io —
+   all have free tiers). Running it only locally means GitHub Actions
+   can't reach it.
+2. Add these as GitHub Secrets:
+   - `API_URL` — your hosted backend URL
+   - `EMAIL_SENDER` — the sending Gmail address
+   - `EMAIL_PASSWORD` — a Gmail App Password (Google Account → Security → App passwords)
+3. Update `API_URL` in `frontend/script.js` to point to the hosted backend.
+4. Deploy `frontend/` to any static host (Netlify, Vercel, GitHub Pages).
+
+## What I learned
+
+Migrating this project away from Firebase gave me a better understanding of:
+
+- Designing a minimal REST API with Flask and SQLite
+- Handling validation and duplicate-prevention without a managed database
+- Separating frontend, backend, and a scheduled worker into clean,
+  independently deployable pieces
+- Securing secrets properly (removing a hardcoded Gmail app password
+  that had been committed to the repo)
+
+## Future improvements
+
+- Move from SQLite to a hosted Postgres instance for reliability across
+  deploys
+- Add an unsubscribe/settings page for users to update or remove their
+  kommun
+- Rate-limit signups and add basic bot protection
+- Improve micro-location matching (neighborhood-level detail for
+  Stockholm, Göteborg, Malmö) on top of kommun-level alerts
+
+## Status
+
+In development — backend rebuilt on Flask/SQLite, frontend rebuilt in
+vanilla HTML/CSS/JS. Not yet launched publicly.
